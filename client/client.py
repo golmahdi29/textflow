@@ -15,9 +15,11 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
-SERVER_HOST = os.getenv("SERVER_HOST", "192.168.246.128")
-SERVER_PORT = int(os.getenv("SERVER_PORT", "5000"))
+                                                 
+SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
+SERVER_PORT = int(os.getenv("SERVER_PORT", os.getenv("PORT", "5000")))
 
+                           
 FONT_PATH = os.getenv("FONT_PATH", "assets/fonts/Vazir.ttf")
 FONT_FAMILY = os.getenv("FONT_FAMILY", "Vazir")
 
@@ -30,7 +32,6 @@ PRIVATE_FONT_LOADED = False
 
 
 def load_private_font():
-    """Load the configured font privately on Windows before Tkinter starts."""
     global FONT, PRIVATE_FONT_LOADED
 
     if not FONT_FILE.is_file():
@@ -44,7 +45,7 @@ def load_private_font():
             add_font.argtypes = [ctypes.c_wchar_p, ctypes.c_uint, ctypes.c_void_p]
             add_font.restype = ctypes.c_int
 
-            # FR_PRIVATE = 0x10: make the font available to this process.
+                                                                         
             result = add_font(str(FONT_FILE), 0x10, None)
             if result > 0:
                 PRIVATE_FONT_LOADED = True

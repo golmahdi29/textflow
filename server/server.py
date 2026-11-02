@@ -1,29 +1,68 @@
+import os
 import socket
+from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "5000"))
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-server.bind(("0.0.0.0", 5000))
-server.listen(1)
+server.bind((HOST, PORT))
+server.listen(5)
 
-print("Server is running...")
-print("Waiting for client...")
+print("=" * 45)
+print("TCP SERVER STARTED")
+print(f"Host: {HOST}")
+print(f"Port: {PORT}")
+print("Waiting for connections...")
+print("=" * 45)
 
-conn, addr = server.accept()
-print(f"Client connected: {addr}")
+try:
+    while True:
+        conn, addr = server.accept()
 
-while True:
-    data = conn.recv(1024)
+        print(f"\n[CONNECTED] {addr[0]}:{addr[1]}")
 
-    if not data:
-        break
+        buffer = b""
 
-    message = data.decode("utf-8")
-    print(f"Received: {message}")
+        try:
+            while True:
+                data = conn.recv(4096)
 
-    response = message.upper()
-    conn.sendall(response.encode("utf-8"))
+                if not data:
+                    break
 
-    print(f"Sent: {response}")
+                buffer += data
 
-conn.close()
-server.close()
+                while b"\n" in buffer:
+                    message, buffer = buffer.split(b"\n", 1)
+                    message = message.decode("utf-8").strip()
+
+                    if not message:
+                        continue
+
+                    print(f"[RECEIVED] {message}")
+
+                    response = message.upper()
+
+                    conn.sendall((response + "\n").encode("utf-8"))
+
+                    print(f"[SENT] {response}")
+
+        except ConnectionError:
+            print("[ERROR] Connection lost")
+
+        finally:
+            conn.close()
+            print(f"[DISCONNECTED] {addr[0]}:{addr[1]}")
+
+except KeyboardInterrupt:
+    print("\n[SERVER] Shutting down...")
+
+finally:
+    server.close()

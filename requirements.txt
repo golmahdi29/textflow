@@ -1,0 +1,4 @@
+customtkinter
+python-dotenv
+arabic-reshaper
+python-bidi
